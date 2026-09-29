@@ -1,8 +1,17 @@
 package com.tatf.tests.adminces;
 
+import com.tatf.adminces.pages.AccesoPO;
+import com.tatf.adminces.pages.AlertaPO;
+import com.tatf.adminces.pages.InicioAdministradorPO;
+import com.tatf.adminces.pages.InicioPO;
+import com.tatf.adminces.pages.LoginPO;
+import com.tatf.adminces.pages.RegistroAdministradorPO;
+import com.tatf.adminces.pages.ReiniciarContrasenaPO;
+
 import com.tatf.core.browser.BrowserFactory;
 import com.tatf.core.browser.IBrowser;
 import com.tatf.core.verification.IVerify;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -12,23 +21,29 @@ public class ReiniciarContrasenaTest {
     private static IBrowser browser;
     private static IVerify verify;
 
+
     @BeforeAll
     static void beforeAll() {
         browser = BrowserFactory.getBrowser(true);
         verify = IVerify.create();
     }
 
+
     @AfterAll
     static void afterAll() {
         BrowserFactory.quitBrowser();
     }
 
+
     @Test
     void reiniciarContrasena() {
 
         // ==================================================
-        // DATOS DE PRUEBA
+        // DATOS
         // ==================================================
+
+        String claveAcceso =
+                "3)ea60e0be3ba12c6ecd%7297868%5c4";
 
         String email =
                 "reset.test."
@@ -40,18 +55,32 @@ public class ReiniciarContrasenaTest {
 
 
         // ==================================================
-        // 1. ACCEDER A ADMINCES
+        // PAGE OBJECTS
         // ==================================================
 
-        AdminCesHelper.accederAdminCes(browser);
+        AccesoPO accesoPO =
+                new AccesoPO(browser);
+
+        AlertaPO alertaPO =
+                new AlertaPO(browser);
 
 
         // ==================================================
-        // 2. CREAR ADMINISTRADOR AUXILIAR
+        // 1. ACCEDER
         // ==================================================
 
-        AdminCesHelper.crearAdministradorAuxiliar(
-                browser,
+        InicioPO inicioPO =
+                accesoPO.acceder(claveAcceso);
+
+
+        // ==================================================
+        // 2. CREAR ADMINISTRADOR PARA LA PRUEBA
+        // ==================================================
+
+        RegistroAdministradorPO registroPO =
+                inicioPO.irARegistroAdministrador();
+
+        registroPO.registrarAdministrador(
                 "Usuario",
                 "Reset",
                 email,
@@ -61,14 +90,11 @@ public class ReiniciarContrasenaTest {
 
 
         // ==================================================
-        // 3. VALIDAR CREACIÓN DEL ADMINISTRADOR
+        // 3. VALIDAR CREACIÓN
         // ==================================================
 
-        browser.wait("swal2-html-container").id();
-
-        String mensajeCreacion = browser.find()
-                .id("swal2-html-container")
-                .getText();
+        String mensajeCreacion =
+                alertaPO.obtenerMensaje();
 
         verify.verify(
                 "Usuario creado.",
@@ -76,93 +102,55 @@ public class ReiniciarContrasenaTest {
                 "No se pudo crear el Administrador necesario para la prueba."
         );
 
-        AdminCesHelper.cerrarMensajeOk(browser);
+        alertaPO.cerrar();
 
 
         // ==================================================
-        // 4. IR A REINICIAR CONTRASEÑA
+        // 4. REINICIAR CONTRASEÑA
         // ==================================================
 
-        browser.find()
-                .xpath(
-                        "//a[@href='/adminces/forgot-password' " +
-                                "and .//div[normalize-space()='Reiniciar contraseña']]"
-                )
-                .click();
+        ReiniciarContrasenaPO reiniciarPO =
+                inicioPO.irAReiniciarContrasena();
 
-
-        // ==================================================
-        // 5. ESPERAR FORMULARIO
-        // ==================================================
-
-        browser.wait(
-                "//input[@type='email' and @placeholder='Email']"
-        ).xpath();
-
-
-        // ==================================================
-        // 6. COMPLETAR REINICIO DE CONTRASEÑA
-        // ==================================================
-
-        browser.find()
-                .xpath("//input[@type='email' and @placeholder='Email']")
-                .write(email);
-
-        browser.find()
-                .name("inputPassword")
-                .write(passwordNueva);
-
-        browser.find()
-                .name("inputRepeatPassword")
-                .write(passwordNueva);
-
-        browser.find()
-                .id("btnReset")
-                .click();
-
-
-        // ==================================================
-        // 7. VALIDAR RESPUESTA DEL SISTEMA
-        // ==================================================
-
-        browser.wait("swal2-html-container").id();
-
-        /*
-         * No fijamos acá un texto concreto porque el objetivo
-         * principal del escenario es comprobar posteriormente
-         * que la nueva contraseña permite iniciar sesión.
-         */
-
-        AdminCesHelper.cerrarMensajeOk(browser);
-
-
-        // ==================================================
-        // 8. INICIAR SESIÓN CON LA NUEVA CONTRASEÑA
-        // ==================================================
-
-        AdminCesHelper.iniciarSesion(
-                browser,
+        reiniciarPO.reiniciarContrasena(
                 email,
                 passwordNueva
         );
 
 
         // ==================================================
-        // 9. CERRAR MENSAJE DEL LOGIN
+        // 5. VALIDAR RESPUESTA
         // ==================================================
 
-        AdminCesHelper.cerrarMensajeOk(browser);
+        alertaPO.obtenerMensaje();
+
+        alertaPO.cerrar();
 
 
         // ==================================================
-        // 10. VALIDAR QUE LA NUEVA CONTRASEÑA FUNCIONA
+        // 6. INICIAR SESIÓN CON NUEVA CONTRASEÑA
         // ==================================================
 
-        browser.wait("Crear usuario").link();
+        LoginPO loginPO =
+                inicioPO.irAInicioSesion();
 
-        String textoCrearUsuario = browser.find()
-                .link("Crear usuario")
-                .getText();
+        loginPO.iniciarSesion(
+                email,
+                passwordNueva
+        );
+
+        alertaPO.cerrar();
+
+
+        // ==================================================
+        // 7. VALIDAR ACCESO
+        // ==================================================
+
+        InicioAdministradorPO administradorPO =
+                new InicioAdministradorPO(browser);
+
+        String textoCrearUsuario =
+                administradorPO.obtenerTextoCrearUsuario();
 
         verify.verify(
                 "Crear usuario",

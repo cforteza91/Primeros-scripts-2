@@ -1,8 +1,18 @@
 package com.tatf.tests.adminces;
 
+import com.tatf.adminces.pages.AccesoPO;
+import com.tatf.adminces.pages.AlertaPO;
+import com.tatf.adminces.pages.CrearTesterPO;
+import com.tatf.adminces.pages.InicioAdministradorPO;
+import com.tatf.adminces.pages.InicioPO;
+import com.tatf.adminces.pages.LoginPO;
+import com.tatf.adminces.pages.RegistroAdministradorPO;
+import com.tatf.adminces.pages.UsuariosPO;
+
 import com.tatf.core.browser.BrowserFactory;
 import com.tatf.core.browser.IBrowser;
 import com.tatf.core.verification.IVerify;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -12,23 +22,29 @@ public class EliminarTesterTest {
     private static IBrowser browser;
     private static IVerify verify;
 
+
     @BeforeAll
     static void beforeAll() {
         browser = BrowserFactory.getBrowser(true);
         verify = IVerify.create();
     }
 
+
     @AfterAll
     static void afterAll() {
         BrowserFactory.quitBrowser();
     }
 
+
     @Test
     void eliminarCuentaTester() {
 
         // ==================================================
-        // DATOS DE PRUEBA
+        // DATOS
         // ==================================================
+
+        String claveAcceso =
+                "3)ea60e0be3ba12c6ecd%7297868%5c4";
 
         String emailAdministrador =
                 "admin.eliminar."
@@ -50,18 +66,32 @@ public class EliminarTesterTest {
 
 
         // ==================================================
+        // PAGE OBJECTS
+        // ==================================================
+
+        AccesoPO accesoPO =
+                new AccesoPO(browser);
+
+        AlertaPO alertaPO =
+                new AlertaPO(browser);
+
+
+        // ==================================================
         // 1. ACCEDER A ADMINCES
         // ==================================================
 
-        AdminCesHelper.accederAdminCes(browser);
+        InicioPO inicioPO =
+                accesoPO.acceder(claveAcceso);
 
 
         // ==================================================
         // 2. CREAR ADMINISTRADOR AUXILIAR
         // ==================================================
 
-        AdminCesHelper.crearAdministradorAuxiliar(
-                browser,
+        RegistroAdministradorPO registroPO =
+                inicioPO.irARegistroAdministrador();
+
+        registroPO.registrarAdministrador(
                 "Admin",
                 "Eliminar",
                 emailAdministrador,
@@ -74,43 +104,42 @@ public class EliminarTesterTest {
         // 3. VALIDAR CREACIÓN DEL ADMINISTRADOR
         // ==================================================
 
-        browser.wait("swal2-html-container").id();
-
-        String mensajeCreacionAdministrador = browser.find()
-                .id("swal2-html-container")
-                .getText();
+        String mensajeAdministrador =
+                alertaPO.obtenerMensaje();
 
         verify.verify(
                 "Usuario creado.",
-                mensajeCreacionAdministrador,
+                mensajeAdministrador,
                 "No se pudo crear el Administrador necesario para la prueba."
         );
 
-        AdminCesHelper.cerrarMensajeOk(browser);
+        alertaPO.cerrar();
 
 
         // ==================================================
-        // 4. INICIAR SESIÓN COMO ADMINISTRADOR
+        // 4. INICIAR SESIÓN
         // ==================================================
 
-        AdminCesHelper.iniciarSesion(
-                browser,
+        LoginPO loginPO =
+                inicioPO.irAInicioSesion();
+
+        loginPO.iniciarSesion(
                 emailAdministrador,
                 passwordAdministrador
         );
 
-        AdminCesHelper.cerrarMensajeOk(browser);
+        alertaPO.cerrar();
 
 
         // ==================================================
         // 5. VALIDAR INGRESO
         // ==================================================
 
-        browser.wait("Crear usuario").link();
+        InicioAdministradorPO administradorPO =
+                new InicioAdministradorPO(browser);
 
-        String textoCrearUsuario = browser.find()
-                .link("Crear usuario")
-                .getText();
+        String textoCrearUsuario =
+                administradorPO.obtenerTextoCrearUsuario();
 
         verify.verify(
                 "Crear usuario",
@@ -120,165 +149,95 @@ public class EliminarTesterTest {
 
 
         // ==================================================
-        // 6. IR A CREAR USUARIO TESTER
+        // 6. CREAR TESTER
         // ==================================================
 
-        browser.find()
-                .link("Crear usuario")
-                .click();
+        CrearTesterPO crearTesterPO =
+                administradorPO.irACrearUsuario();
 
-        browser.wait("inputFirstName").name();
-
-
-        // ==================================================
-        // 7. COMPLETAR DATOS DEL TESTER
-        // ==================================================
-
-        browser.find()
-                .name("inputFirstName")
-                .write(nombreTester);
-
-        browser.find()
-                .name("inputLastName")
-                .write(apellidoTester);
-
-        browser.wait(
-                "//input[@type='email' and @placeholder='Email']"
-        ).xpath();
-
-        browser.find()
-                .xpath("//input[@type='email' and @placeholder='Email']")
-                .write(emailTester);
-
-        browser.find()
-                .name("inputCountry")
-                .selectValue(paisTester);
-
-        browser.find()
-                .name("inputPassword")
-                .write(passwordTester);
-
-        browser.find()
-                .id("testerSenior")
-                .click();
+        crearTesterPO.crearTesterSenior(
+                nombreTester,
+                apellidoTester,
+                emailTester,
+                paisTester,
+                passwordTester
+        );
 
 
         // ==================================================
-        // 8. CREAR CUENTA TESTER
+        // 7. VALIDAR CREACIÓN DEL TESTER
         // ==================================================
 
-        browser.find()
-                .id("btnRegister")
-                .click();
-
-
-        // ==================================================
-        // 9. VALIDAR CREACIÓN DEL TESTER
-        // ==================================================
-
-        browser.wait("swal2-html-container").id();
-
-        String mensajeCreacionTester = browser.find()
-                .id("swal2-html-container")
-                .getText();
+        String mensajeTester =
+                alertaPO.obtenerMensaje();
 
         verify.verify(
                 "Usuario creado.",
-                mensajeCreacionTester,
+                mensajeTester,
                 "No se pudo crear el Tester necesario para la prueba."
         );
 
-        AdminCesHelper.cerrarMensajeOk(browser);
+        alertaPO.cerrar();
 
 
         // ==================================================
-        // 10. IR A VER USUARIOS
+        // 8. IR A VER USUARIOS
         // ==================================================
 
-        browser.wait("Ver usuarios").link();
-
-        browser.find()
-                .link("Ver usuarios")
-                .click();
+        UsuariosPO usuariosPO =
+                administradorPO.irAVerUsuarios();
 
 
         // ==================================================
-        // 11. LOCALIZAR LA FILA DEL TESTER
+        // 9. VALIDAR QUE EL TESTER EXISTE
         // ==================================================
 
-        String xpathFilaTester =
-                "//tr[.//td[normalize-space()='" + emailTester + "']]";
+        boolean existeAntes =
+                usuariosPO.existeUsuario(emailTester);
 
-        browser.wait(xpathFilaTester).xpath();
-
-
-        // ==================================================
-        // 12. VALIDAR QUE EXISTE ANTES DE ELIMINAR
-        // ==================================================
-
-        String emailObtenido = browser.find()
-                .xpath(
-                        xpathFilaTester
-                                + "//td[normalize-space()='"
-                                + emailTester
-                                + "']"
-                )
-                .getText();
-
-        verify.verify(
-                emailTester,
-                emailObtenido,
+        verify.verifyTrue(
+                existeAntes,
                 "El Tester que se desea eliminar no aparece en el listado."
         );
 
 
         // ==================================================
-        // 13. PRESIONAR PAPELERA DEL TESTER
+        // 10. ELIMINAR TESTER
         // ==================================================
 
-        browser.find()
-                .xpath(xpathFilaTester + "//button")
-                .click();
+        usuariosPO.eliminarUsuario(emailTester);
 
 
         // ==================================================
-        // 14. VALIDAR MENSAJE DE CONFIRMACIÓN
+        // 11. VALIDAR MENSAJE DE CONFIRMACIÓN
         // ==================================================
 
-        browser.wait("swal2-html-container").id();
-
-        String mensajeEliminar = browser.find()
-                .id("swal2-html-container")
-                .getText();
+        String mensajeConfirmacion =
+                alertaPO.obtenerMensaje();
 
         String mensajeEsperado =
                 "¿Eliminar usuario: " + emailTester + "?";
 
         verify.verify(
                 mensajeEsperado,
-                mensajeEliminar,
+                mensajeConfirmacion,
                 "El mensaje de confirmación no corresponde al Tester seleccionado."
         );
 
 
         // ==================================================
-        // 15. CONFIRMAR ELIMINACIÓN
+        // 12. CONFIRMAR ELIMINACIÓN
         // ==================================================
 
-        browser.find()
-                .xpath("//button[normalize-space()='Sí']")
-                .click();
+        alertaPO.confirmar();
 
 
         // ==================================================
-        // 16. VALIDAR MENSAJE DE ELIMINACIÓN
+        // 13. VALIDAR MENSAJE FINAL
         // ==================================================
 
-        browser.wait("swal2-html-container").id();
-
-        String mensajeEliminacion = browser.find()
-                .id("swal2-html-container")
-                .getText();
+        String mensajeEliminacion =
+                alertaPO.obtenerMensaje();
 
         verify.verify(
                 "Usuario eliminado.",
@@ -286,21 +245,19 @@ public class EliminarTesterTest {
                 "No se mostró el mensaje esperado de eliminación."
         );
 
-        AdminCesHelper.cerrarMensajeOk(browser);
+        alertaPO.cerrar();
 
 
         // ==================================================
-        // 17. VALIDAR QUE EL TESTER YA NO EXISTE
+        // 14. VALIDAR QUE EL TESTER YA NO EXISTE
         // ==================================================
 
-        boolean testerSigueExistiendo =
-                !browser.find()
-                        .xpathList(xpathFilaTester)
-                        .isEmpty();
+        boolean existeDespues =
+                usuariosPO.existeUsuario(emailTester);
 
         verify.verifyFalse(
-                testerSigueExistiendo,
-                "El Tester continúa apareciendo en el listado luego de eliminarlo."
+                existeDespues,
+                "El Tester continúa apareciendo luego de eliminarlo."
         );
     }
 }

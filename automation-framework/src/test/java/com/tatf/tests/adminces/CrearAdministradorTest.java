@@ -1,8 +1,16 @@
 package com.tatf.tests.adminces;
 
+import com.tatf.adminces.pages.AccesoPO;
+import com.tatf.adminces.pages.AlertaPO;
+import com.tatf.adminces.pages.InicioAdministradorPO;
+import com.tatf.adminces.pages.InicioPO;
+import com.tatf.adminces.pages.LoginPO;
+import com.tatf.adminces.pages.RegistroAdministradorPO;
+
 import com.tatf.core.browser.BrowserFactory;
 import com.tatf.core.browser.IBrowser;
 import com.tatf.core.verification.IVerify;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -12,16 +20,19 @@ public class CrearAdministradorTest {
     private static IBrowser browser;
     private static IVerify verify;
 
+
     @BeforeAll
     static void beforeAll() {
         browser = BrowserFactory.getBrowser(true);
         verify = IVerify.create();
     }
 
+
     @AfterAll
     static void afterAll() {
         BrowserFactory.quitBrowser();
     }
+
 
     @Test
     void crearCuentaAdministrador() {
@@ -29,6 +40,9 @@ public class CrearAdministradorTest {
         // ==================================================
         // DATOS DE PRUEBA
         // ==================================================
+
+        String claveAcceso =
+                "3)ea60e0be3ba12c6ecd%7297868%5c4";
 
         String nombre = "Juan";
         String apellido = "Perez";
@@ -43,65 +57,51 @@ public class CrearAdministradorTest {
 
 
         // ==================================================
+        // PAGE OBJECTS
+        // ==================================================
+
+        AccesoPO accesoPO =
+                new AccesoPO(browser);
+
+        AlertaPO alertaPO =
+                new AlertaPO(browser);
+
+
+        // ==================================================
         // 1. ACCEDER A ADMINCES
         // ==================================================
 
-        AdminCesHelper.accederAdminCes(browser);
+        InicioPO inicioPO =
+                accesoPO.acceder(claveAcceso);
 
 
         // ==================================================
-        // 2. IR A REGISTRARSE
+        // 2. IR AL REGISTRO
         // ==================================================
 
-        browser.find()
-                .link("Registrarse")
-                .click();
-
-        browser.wait("inputFirstName").name();
+        RegistroAdministradorPO registroPO =
+                inicioPO.irARegistroAdministrador();
 
 
         // ==================================================
-        // 3. COMPLETAR REGISTRO
+        // 3. CREAR ADMINISTRADOR
         // ==================================================
 
-        browser.find()
-                .name("inputFirstName")
-                .write(nombre);
-
-        browser.find()
-                .name("inputLastName")
-                .write(apellido);
-
-        browser.find()
-                .name("inputEmail")
-                .write(email);
-
-        browser.find()
-                .name("inputPassword")
-                .write(password);
-
-        browser.find()
-                .name("inputRepeatPassword")
-                .write(password);
-
-        browser.find()
-                .name("inputCountry")
-                .write(pais);
-
-        browser.find()
-                .id("btnRegister")
-                .click();
+        registroPO.registrarAdministrador(
+                nombre,
+                apellido,
+                email,
+                password,
+                pais
+        );
 
 
         // ==================================================
         // 4. VALIDAR CREACIÓN
         // ==================================================
 
-        browser.wait("swal2-html-container").id();
-
-        String mensaje = browser.find()
-                .id("swal2-html-container")
-                .getText();
+        String mensaje =
+                alertaPO.obtenerMensaje();
 
         verify.verify(
                 "Usuario creado.",
@@ -109,41 +109,33 @@ public class CrearAdministradorTest {
                 "No se mostró el mensaje esperado de creación."
         );
 
-
-        // ==================================================
-        // 5. CERRAR MENSAJE
-        // ==================================================
-
-        AdminCesHelper.cerrarMensajeOk(browser);
+        alertaPO.cerrar();
 
 
         // ==================================================
-        // 6. INICIAR SESIÓN CON EL ADMINISTRADOR CREADO
+        // 5. INICIAR SESIÓN
         // ==================================================
 
-        AdminCesHelper.iniciarSesion(
-                browser,
+        LoginPO loginPO =
+                inicioPO.irAInicioSesion();
+
+        loginPO.iniciarSesion(
                 email,
                 password
         );
 
-
-        // ==================================================
-        // 7. CERRAR MENSAJE DEL LOGIN
-        // ==================================================
-
-        AdminCesHelper.cerrarMensajeOk(browser);
+        alertaPO.cerrar();
 
 
         // ==================================================
-        // 8. VALIDAR ACCESO
+        // 6. VALIDAR ACCESO
         // ==================================================
 
-        browser.wait("Crear usuario").link();
+        InicioAdministradorPO inicioAdministradorPO =
+                new InicioAdministradorPO(browser);
 
-        String textoCrearUsuario = browser.find()
-                .link("Crear usuario")
-                .getText();
+        String textoCrearUsuario =
+                inicioAdministradorPO.obtenerTextoCrearUsuario();
 
         verify.verify(
                 "Crear usuario",

@@ -1,8 +1,18 @@
 package com.tatf.tests.adminces;
 
+import com.tatf.adminces.pages.AccesoPO;
+import com.tatf.adminces.pages.AlertaPO;
+import com.tatf.adminces.pages.CrearTesterPO;
+import com.tatf.adminces.pages.InicioAdministradorPO;
+import com.tatf.adminces.pages.InicioPO;
+import com.tatf.adminces.pages.LoginPO;
+import com.tatf.adminces.pages.RegistroAdministradorPO;
+import com.tatf.adminces.pages.UsuariosPO;
+
 import com.tatf.core.browser.BrowserFactory;
 import com.tatf.core.browser.IBrowser;
 import com.tatf.core.verification.IVerify;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -12,23 +22,29 @@ public class CrearTesterTest {
     private static IBrowser browser;
     private static IVerify verify;
 
+
     @BeforeAll
     static void beforeAll() {
         browser = BrowserFactory.getBrowser(true);
         verify = IVerify.create();
     }
 
+
     @AfterAll
     static void afterAll() {
         BrowserFactory.quitBrowser();
     }
 
+
     @Test
     void crearCuentaTester() {
 
         // ==================================================
-        // DATOS DE PRUEBA
+        // DATOS
         // ==================================================
+
+        String claveAcceso =
+                "3)ea60e0be3ba12c6ecd%7297868%5c4";
 
         String emailAdministrador =
                 "admin.tester."
@@ -50,18 +66,29 @@ public class CrearTesterTest {
 
 
         // ==================================================
+        // PAGE OBJECTS
+        // ==================================================
+
+        AccesoPO accesoPO = new AccesoPO(browser);
+        AlertaPO alertaPO = new AlertaPO(browser);
+
+
+        // ==================================================
         // 1. ACCEDER A ADMINCES
         // ==================================================
 
-        AdminCesHelper.accederAdminCes(browser);
+        InicioPO inicioPO =
+                accesoPO.acceder(claveAcceso);
 
 
         // ==================================================
         // 2. CREAR ADMINISTRADOR AUXILIAR
         // ==================================================
 
-        AdminCesHelper.crearAdministradorAuxiliar(
-                browser,
+        RegistroAdministradorPO registroPO =
+                inicioPO.irARegistroAdministrador();
+
+        registroPO.registrarAdministrador(
                 "Admin",
                 "Tester",
                 emailAdministrador,
@@ -74,48 +101,42 @@ public class CrearTesterTest {
         // 3. VALIDAR CREACIÓN DEL ADMINISTRADOR
         // ==================================================
 
-        browser.wait("swal2-html-container").id();
-
-        String mensajeCreacionAdministrador = browser.find()
-                .id("swal2-html-container")
-                .getText();
+        String mensajeAdministrador =
+                alertaPO.obtenerMensaje();
 
         verify.verify(
                 "Usuario creado.",
-                mensajeCreacionAdministrador,
+                mensajeAdministrador,
                 "No se pudo crear el Administrador necesario para la prueba."
         );
 
-        AdminCesHelper.cerrarMensajeOk(browser);
+        alertaPO.cerrar();
 
 
         // ==================================================
-        // 4. INICIAR SESIÓN COMO ADMINISTRADOR
+        // 4. INICIAR SESIÓN
         // ==================================================
 
-        AdminCesHelper.iniciarSesion(
-                browser,
+        LoginPO loginPO =
+                inicioPO.irAInicioSesion();
+
+        loginPO.iniciarSesion(
                 emailAdministrador,
                 passwordAdministrador
         );
 
-
-        // ==================================================
-        // 5. CERRAR MENSAJE POSTERIOR AL LOGIN
-        // ==================================================
-
-        AdminCesHelper.cerrarMensajeOk(browser);
+        alertaPO.cerrar();
 
 
         // ==================================================
-        // 6. VALIDAR INGRESO DEL ADMINISTRADOR
+        // 5. VALIDAR INGRESO
         // ==================================================
 
-        browser.wait("Crear usuario").link();
+        InicioAdministradorPO administradorPO =
+                new InicioAdministradorPO(browser);
 
-        String textoCrearUsuario = browser.find()
-                .link("Crear usuario")
-                .getText();
+        String textoCrearUsuario =
+                administradorPO.obtenerTextoCrearUsuario();
 
         verify.verify(
                 "Crear usuario",
@@ -125,115 +146,51 @@ public class CrearTesterTest {
 
 
         // ==================================================
-        // 7. IR A CREAR USUARIO TESTER
+        // 6. CREAR TESTER
         // ==================================================
 
-        browser.find()
-                .link("Crear usuario")
-                .click();
+        CrearTesterPO crearTesterPO =
+                administradorPO.irACrearUsuario();
 
-        browser.wait("inputFirstName").name();
-
-
-        // ==================================================
-        // 8. COMPLETAR DATOS DEL TESTER
-        // ==================================================
-
-        browser.find()
-                .name("inputFirstName")
-                .write(nombreTester);
-
-        browser.find()
-                .name("inputLastName")
-                .write(apellidoTester);
-
-        browser.wait(
-                "//input[@type='email' and @placeholder='Email']"
-        ).xpath();
-
-        browser.find()
-                .xpath("//input[@type='email' and @placeholder='Email']")
-                .write(emailTester);
-
-        browser.find()
-                .name("inputCountry")
-                .selectValue(paisTester);
-
-        browser.find()
-                .name("inputPassword")
-                .write(passwordTester);
-
-
-        // ==================================================
-        // 9. SELECCIONAR PERFIL TESTER SENIOR
-        // ==================================================
-
-        browser.find()
-                .id("testerSenior")
-                .click();
-
-
-        // ==================================================
-        // 10. CREAR CUENTA TESTER
-        // ==================================================
-
-        browser.find()
-                .id("btnRegister")
-                .click();
-
-
-        // ==================================================
-        // 11. VALIDAR MENSAJE DE CREACIÓN
-        // ==================================================
-
-        browser.wait("swal2-html-container").id();
-
-        String mensajeCreacionTester = browser.find()
-                .id("swal2-html-container")
-                .getText();
-
-        verify.verify(
-                "Usuario creado.",
-                mensajeCreacionTester,
-                "No se mostró el mensaje esperado al crear la cuenta Tester."
+        crearTesterPO.crearTesterSenior(
+                nombreTester,
+                apellidoTester,
+                emailTester,
+                paisTester,
+                passwordTester
         );
 
 
         // ==================================================
-        // 12. CERRAR MENSAJE
+        // 7. VALIDAR MENSAJE
         // ==================================================
 
-        AdminCesHelper.cerrarMensajeOk(browser);
+        String mensajeTester =
+                alertaPO.obtenerMensaje();
 
+        verify.verify(
+                "Usuario creado.",
+                mensajeTester,
+                "No se mostró el mensaje esperado al crear la cuenta Tester."
+        );
 
-        // ==================================================
-        // 13. IR A VER USUARIOS
-        // ==================================================
-
-        browser.wait("Ver usuarios").link();
-
-        browser.find()
-                .link("Ver usuarios")
-                .click();
+        alertaPO.cerrar();
 
 
         // ==================================================
-        // 14. BUSCAR EL TESTER CREADO
+        // 8. VER USUARIOS
         // ==================================================
 
-        String xpathEmailTester =
-                "//td[normalize-space()='" + emailTester + "']";
-
-        browser.wait(xpathEmailTester).xpath();
-
-        String emailObtenido = browser.find()
-                .xpath(xpathEmailTester)
-                .getText();
+        UsuariosPO usuariosPO =
+                administradorPO.irAVerUsuarios();
 
 
         // ==================================================
-        // 15. VALIDAR QUE EL TESTER EXISTE
+        // 9. VALIDAR TESTER CREADO
         // ==================================================
+
+        String emailObtenido =
+                usuariosPO.obtenerEmailUsuario(emailTester);
 
         verify.verify(
                 emailTester,
